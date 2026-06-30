@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Drag Test</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    padding: 20px 16px 60px;
+    background: #FAF6EF;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    color: #2E2A24;
+  }
+  h2 { font-size: 18px; margin: 0 0 6px; }
+  p { font-size: 13px; color: #6B6356; margin: 0 0 20px; line-height: 1.5; }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+
+  .tile {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #E8E0D2;
+    box-shadow: 0 2px 10px rgba(46,42,36,0.06);
+    display: flex;
+    align-items: center;
+    padding: 14px 14px 14px 12px;
+    gap: 12px;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+    /* NO touch-action here — we manage it ourselves */
+  }
+  .tile::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--cat);
+  }
+  .tile.done { opacity: 0.5; }
+  .tile.done .label { text-decoration: line-through; }
+  .tile.holding { background: #F0EBE1; }
+
+  .check {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #E8E0D2;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    position: relative;
+    z-index: 2;
+    touch-action: manipulation;
+  }
+  .tile.done .check { background: #C4622D; border-color: #C4622D; color: #fff; }
+
+  .icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--cat-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+  .label { flex: 1; font-size: 15px; font-weight: 600; pointer-events: none; }
+  .time { font-size: 12px; color: #6B6356; pointer-events: none; }
+
+  .edit-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #A89A8C;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    background: none; border: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.93;
+    box-shadow: 0 10px 28px rgba(46,42,36,0.22);
+    border-radius: 16px;
+  }
+
+  .drop-line {
+    height: 3px; border-radius: 3px;
+    background: #C4622D;
+    margin: -6px 0;
+    display: none;
+    z-index: 5; position: relative;
+  }
+  .drop-line.visible { display: block; }
+
+  .hint { text-align: center; font-size: 12px; color: #A89A8C; margin-top: 24px; }
+
+  .toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%);
+    background: #2E2A24; color: #fff;
+    font-size: 13px; font-weight: 600;
+    padding: 10px 20px; border-radius: 999px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<h2>Drag test v4</h2>
+<p><strong>Tap</strong> the circle to check/uncheck. <strong>Tap</strong> the pencil to edit.<br><strong>Hold anywhere else on the tile</strong> (~400ms) to drag.</p>
+
+<div class="list" id="list"></div>
+<div class="hint">Try scrolling too</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var items = [
+  { id:1, icon:'🍼', label:'Bottle Feed',       time:'7:00am',  cat:'#C8956A', catBg:'#F5E6D8', done:false },
+  { id:2, icon:'😴', label:'Nap',               time:'9:30am',  cat:'#7E96A8', catBg:'#E4ECF1', done:false },
+  { id:3, icon:'🥣', label:'Solids Feed',       time:'11:00am', cat:'#C8956A', catBg:'#F5E6D8', done:false },
+  { id:4, icon:'📚', label:'Library Storytime', time:'10:00am', cat:'#8FA876', catBg:'#E8EFDF', done:false },
+  { id:5, icon:'🚶', label:'Pram Walk',         time:'',        cat:'#8FA876', catBg:'#E8EFDF', done:false },
+  { id:6, icon:'👋', label:'Visitors',          time:'',        cat:'#C97E84', catBg:'#F3E2E3', done:false },
+  { id:7, icon:'🛁', label:'Bath time',         time:'6:00pm',  cat:'#A89A8C', catBg:'#ECE6DC', done:false },
+  { id:8, icon:'⭐', label:'Bonus item',        time:'',        cat:'#A89A8C', catBg:'#ECE6DC', done:false },
+];
+
+var listEl = document.getElementById('list');
+var toastEl = document.getElementById('toast');
+var toastTimer;
+
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 1500);
+}
+
+function render() {
+  listEl.innerHTML = '';
+  items.forEach(function(item) {
+    var tile = document.createElement('div');
+    tile.className = 'tile' + (item.done ? ' done' : '');
+    tile.dataset.id = item.id;
+    tile.style.setProperty('--cat', item.cat);
+    tile.style.setProperty('--cat-bg', item.catBg);
+
+    var check = document.createElement('div');
+    check.className = 'check';
+    check.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+    var icon = document.createElement('div');
+    icon.className = 'icon';
+    icon.textContent = item.icon;
+
+    var label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = item.label;
+
+    var time = document.createElement('div');
+    time.className = 'time';
+    time.textContent = item.time;
+
+    var editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn';
+    editBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+
+    tile.appendChild(check);
+    tile.appendChild(icon);
+    tile.appendChild(label);
+    tile.appendChild(time);
+    tile.appendChild(editBtn);
+    listEl.appendChild(tile);
+
+    check.addEventListener('click', function(e) {
+      e.stopPropagation();
+      item.done = !item.done;
+      render();
+    });
+
+    editBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      showToast('Edit: ' + item.label);
+    });
+
+    attachHoldDrag(tile, item);
+  });
+}
+
+// ---- HOLD-TO-DRAG ----
+// Strategy: grab pointer immediately on pointerdown (required for drag to work on mobile).
+// Track movement — if they move significantly before HOLD_MS, release capture so browser
+// can scroll. If HOLD_MS passes without significant movement, activate drag.
+
+var HOLD_MS = 400;
+var SCROLL_THRESHOLD_PX = 6; // if Y moves more than this before hold fires, assume scroll
+var drag = null;
+
+function attachHoldDrag(tileEl, item) {
+  var state = null; // holds per-gesture state
+
+  tileEl.addEventListener('pointerdown', function(e) {
+    // Only handle primary pointer, ignore if from check/editBtn (they stopPropagation on click
+    // but pointerdown still bubbles — so we check the target)
+    if (e.target.closest('.check') || e.target.closest('.edit-btn')) return;
+    if (e.button !== 0 && e.button !== undefined && e.pointerType === 'mouse') return;
+
+    e.preventDefault(); // prevent text selection etc
+
+    // Capture immediately — this is what makes drag work
+    try { tileEl.setPointerCapture(e.pointerId); } catch(err) {}
+
+    state = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      active: true,
+      dragging: false,
+      scrollAborted: false
+    };
+
+    var holdTimer = setTimeout(function() {
+      if (!state || !state.active || state.scrollAborted) return;
+      // Activate drag
+      state.dragging = true;
+      tileEl.classList.remove('holding');
+      try { navigator.vibrate(30); } catch(err) {}
+      beginDrag(e, tileEl, item.id, state.pointerId);
+    }, HOLD_MS);
+
+    state.holdTimer = holdTimer;
+    tileEl.classList.add('holding');
+  });
+
+  tileEl.addEventListener('pointermove', function(e) {
+    if (!state || !state.active || state.dragging) return;
+    var dy = Math.abs(e.clientY - state.startY);
+    var dx = Math.abs(e.clientX - state.startX);
+    if (dy > SCROLL_THRESHOLD_PX || dx > SCROLL_THRESHOLD_PX) {
+      // User is scrolling — abort hold, release pointer so browser can scroll
+      clearTimeout(state.holdTimer);
+      state.scrollAborted = true;
+      state.active = false;
+      tileEl.classList.remove('holding');
+      try { tileEl.releasePointerCapture(e.pointerId); } catch(err) {}
+    }
+  });
+
+  tileEl.addEventListener('pointerup', function(e) {
+    if (!state) return;
+    clearTimeout(state.holdTimer);
+    if (!state.dragging) {
+      tileEl.classList.remove('holding');
+    }
+    state.active = false;
+    state = null;
+  });
+
+  tileEl.addEventListener('pointercancel', function(e) {
+    if (!state) return;
+    clearTimeout(state.holdTimer);
+    tileEl.classList.remove('holding');
+    state.active = false;
+    state = null;
+  });
+}
+
+// ---- DRAG SYSTEM ----
+var activeDrag = null;
+
+function beginDrag(triggerEvent, tileEl, itemId, pointerId) {
+  var rect = tileEl.getBoundingClientRect();
+
+  var ghost = tileEl.cloneNode(true);
+  ghost.className = 'tile ghost';
+  ghost.style.width = rect.width + 'px';
+  ghost.style.left = rect.left + 'px';
+  ghost.style.top = rect.top + 'px';
+  ghost.style.setProperty('--cat', tileEl.style.getPropertyValue('--cat'));
+  ghost.style.setProperty('--cat-bg', tileEl.style.getPropertyValue('--cat-bg'));
+  document.body.appendChild(ghost);
+
+  tileEl.style.opacity = '0.3';
+
+  activeDrag = {
+    itemId: itemId,
+    sourceTile: tileEl,
+    ghost: ghost,
+    offsetY: triggerEvent.clientY - rect.top,
+    dropIndex: null,
+    pointerId: pointerId
+  };
+
+  // Move pointermove/up listeners to window so drag works anywhere on screen
+  window.addEventListener('pointermove', onDragMove);
+  window.addEventListener('pointerup', onDrop);
+  window.addEventListener('pointercancel', onDrop);
+}
+
+function onDragMove(e) {
+  if (!activeDrag) return;
+  activeDrag.ghost.style.top = (e.clientY - activeDrag.offsetY) + 'px';
+
+  var ghostCenterY = e.clientY - activeDrag.offsetY + activeDrag.ghost.offsetHeight / 2;
+  var tiles = Array.prototype.slice.call(listEl.querySelectorAll('.tile'));
+
+  listEl.querySelectorAll('.drop-line').forEach(function(l) { l.remove(); });
+
+  var insertBefore = null;
+  for (var i = 0; i < tiles.length; i++) {
+    var r = tiles[i].getBoundingClientRect();
+    if (ghostCenterY < r.top + r.height / 2) {
+      insertBefore = i;
+      break;
+    }
+  }
+  activeDrag.dropIndex = insertBefore;
+
+  var line = document.createElement('div');
+  line.className = 'drop-line visible';
+  if (insertBefore === null) {
+    listEl.appendChild(line);
+  } else {
+    listEl.insertBefore(line, tiles[insertBefore]);
+  }
+}
+
+function onDrop(e) {
+  if (!activeDrag) return;
+  window.removeEventListener('pointermove', onDragMove);
+  window.removeEventListener('pointerup', onDrop);
+  window.removeEventListener('pointercancel', onDrop);
+
+  activeDrag.ghost.remove();
+  listEl.querySelectorAll('.drop-line').forEach(function(l) { l.remove(); });
+  activeDrag.sourceTile.style.opacity = '';
+
+  var fromIdx = items.findIndex(function(i) { return i.id === activeDrag.itemId; });
+  var toIdx = activeDrag.dropIndex;
+
+  if (fromIdx !== -1 && toIdx !== null && fromIdx !== toIdx && fromIdx + 1 !== toIdx) {
+    var moved = items.splice(fromIdx, 1)[0];
+    var insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
+    items.splice(insertAt, 0, moved);
+  }
+
+  activeDrag = null;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
