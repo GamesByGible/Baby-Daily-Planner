@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Day Plan</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#FAF6EF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAF6EF;
+    --accent: #C4622D;
+    --accent-light: #EADFCB;
+    --ink: #2E2A24;
+    --ink-soft: #6B6356;
+    --card: #FFFFFF;
+    --border: #E8E0D2;
+    --shadow: 0 2px 10px rgba(46, 42, 36, 0.06);
+    --shadow-lift: 0 6px 20px rgba(46, 42, 36, 0.14);
+
+    --cat-feed: #C8956A;
+    --cat-feed-bg: #F5E6D8;
+    --cat-sleep: #7E96A8;
+    --cat-sleep-bg: #E4ECF1;
+    --cat-outing: #8FA876;
+    --cat-outing-bg: #E8EFDF;
+    --cat-home: #C97E84;
+    --cat-home-bg: #F3E2E3;
+    --cat-other: #A89A8C;
+    --cat-other-bg: #ECE6DC;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'Roboto Mono', monospace; }
+
+  button { font-family: inherit; border: none; background: none; cursor: pointer; }
+  button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg);
+    padding: calc(env(safe-area-inset-top) + 14px) 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar h1 {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+  }
+  .icon-btn:active { background: var(--accent-light); }
+
+  .datenav {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .datenav button.arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    flex-shrink: 0;
+  }
+  .datenav button.arrow:active { background: var(--accent-light); color: var(--accent); }
+  .datenav .datelabel {
+    flex: 1;
+    text-align: center;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 0 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .datenav .datelabel .sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-top: 1px;
+  }
+
+  .view { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  .empty-state {
+    margin-top: 18vh;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .empty-state .emoji-ring {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: var(--accent);
+  }
+  .empty-state h2 {
+    font-size: 17px;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  .empty-state p {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+    line-height: 1.5;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 13px 28px;
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 9px 16px;
+    border-radius: 12px;
+  }
+  .btn-secondary:active { background: var(--accent-light); }
+
+  .plan-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+  }
+  .reset-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
+  .reset-link:active { background: var(--accent-light); color: var(--accent); }
+
+  .tile-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .drop-line {
+    height: 3px;
+    border-radius: 3px;
+    background: var(--accent);
+    margin: -6px 0;
+    position: relative;
+    z-index: 5;
+  }
+
+  .tile {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 11px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tile::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--cat-color);
+  }
+  .tile.done { opacity: 0.55; }
+  .tile.done .tile-name { text-decoration: line-through; }
+
+  .tile-check {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    margin-left: 2px;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 2;
+  }
+  .tile.done .tile-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--cat-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  .tile-mid { flex: 1; min-width: 0; pointer-events: none; }
+  .tile-name {
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tile-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .tile-time {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cat-color);
+  }
+  .tile-time.none { color: var(--ink-soft); font-style: italic; }
+  .tile-cat-label {
+    font-size: 10.5px;
+    color: var(--ink-soft);
+  }
+  .badge-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 3px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .badge.term {
+    background: #E8EFDF;
+    color: #5E7548;
+  }
+  .badge.booking {
+    background: #F3E2E3;
+    color: #9C5B61;
+  }
+  .badge svg { display: block; }
+
+  .tile-actions { display: none; } /* removed — using hold-to-drag */
+
+  .tile.holding { background: #F5F0E8; }
+
+  .tile-edit-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-soft);
+    flex-shrink: 0;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 2;
+  }
+  .tile-edit-btn:active { background: var(--accent-light); color: var(--accent); }
+
+  .seg-control {
+    display: flex;
+    background: var(--accent-light);
+    border-radius: 12px;
+    padding: 3px;
+    margin-bottom: 16px;
+    gap: 2px;
+  }
+  .seg-btn {
+    flex: 1;
+    padding: 9px 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 9px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .seg-btn .count {
+    font-size: 11px;
+    opacity: 0.75;
+  }
+  .seg-btn.active {
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+
+  .cat-tile {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 11px;
+    margin-bottom: 10px;
+  }
+  .cat-tile.unavailable { opacity: 0.55; }
+  .cat-tile .reason {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .cat-tile .action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .cat-tile .action-btn.add {
+    background: var(--accent);
+    color: #fff;
+  }
+  .cat-tile .action-btn.remove {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .cat-tile .action-btn:disabled {
+    background: var(--border);
+    color: var(--ink-soft);
+  }
+
+  .empty-section {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  .fab {
+    position: fixed;
+    right: 18px;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-lift);
+    z-index: 15;
+  }
+  .fab:active { transform: scale(0.94); }
+
+  .tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index: 20;
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 2px;
+    color: var(--ink-soft);
+    border-radius: 12px;
+  }
+  .tab-btn.active { color: var(--accent); }
+  .tab-btn span.label { font-size: 11px; font-weight: 600; }
+
+  .settings-section { margin-bottom: 26px; }
+  .settings-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 10px;
+  }
+  .def-row {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 8px;
+  }
+  .def-row .tile-icon { width: 36px; height: 36px; font-size: 17px; border-radius: 10px; }
+  .def-row-mid { flex: 1; min-width: 0; }
+  .def-row-name { font-size: 14px; font-weight: 600; }
+  .def-row-meta { font-size: 11.5px; color: var(--ink-soft); margin-top: 1px; }
+  .def-row-chevron { color: var(--ink-soft); flex-shrink: 0; }
+
+  .add-def-btn {
+    width: 100%;
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    padding: 13px;
+    text-align: center;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13.5px;
+    background: transparent;
+  }
+  .add-def-btn:active { background: var(--accent-light); }
+
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(46, 42, 36, 0.45);
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: var(--bg);
+    border-radius: 22px 22px 0 0;
+    z-index: 31;
+    max-height: 88vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+  .sheet.open { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--border);
+    margin: 10px auto 4px;
+  }
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px 4px;
+  }
+  .sheet-header h2 { font-size: 16.5px; margin: 0; font-weight: 700; }
+  .sheet-body { padding: 14px 18px 6px; }
+
+  .field-group { margin-bottom: 16px; }
+  .field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .text-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 15px;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .text-input.mono { font-family: 'Roboto Mono', monospace; }
+  .text-input:focus { border-color: var(--accent); }
+
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .icon-choice {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+  }
+  .icon-choice.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .chip.selected {
+    border-color: var(--chip-color, var(--accent));
+    background: var(--chip-bg, var(--accent-light));
+    color: var(--chip-color, var(--accent));
+  }
+
+  .day-chip-row { display: flex; gap: 6px; }
+  .day-chip {
+    flex: 1;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .day-chip.selected {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+  }
+  .toggle-row .lbl { font-size: 14px; font-weight: 600; }
+  .toggle-row .sub-lbl { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .switch {
+    width: 46px;
+    height: 27px;
+    border-radius: 999px;
+    background: var(--border);
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .switch.on { background: var(--accent); }
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 23px; height: 23px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    transition: left 0.2s;
+  }
+  .switch.on::after { left: 21px; }
+
+  .date-range-row { display: flex; gap: 10px; }
+  .date-range-row .field-group { flex: 1; margin-bottom: 0; }
+
+  .sheet-footer {
+    display: flex;
+    gap: 10px;
+    padding: 16px 18px 4px;
+  }
+  .sheet-footer .btn-primary, .sheet-footer .btn-danger {
+    flex: 1;
+    text-align: center;
+  }
+  .btn-danger {
+    background: #FCEAE8;
+    color: #B5483D;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 13px;
+    border-radius: 14px;
+  }
+  .btn-danger:active { background: #f6d6d2; }
+
+  .confirm-text {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    padding: 0 18px 6px;
+  }
+
+  svg { display: block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-row">
+    <h1 id="pageTitle">Today's Plan</h1>
+    <button class="icon-btn" id="headerActionBtn" title="Action">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+  <div class="datenav" id="dateNav">
+    <button class="arrow" id="prevDayBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="datelabel" id="dateLabel"></div>
+    <button class="arrow" id="nextDayBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="view active" id="view-plan">
+  <div id="planEmptyState" style="display:none;" class="empty-state">
+    <div class="emoji-ring">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </div>
+    <h2>Nothing planned yet</h2>
+    <p>Load this day to bring in your everyday<br>activities, then add anything else from<br>the Available tab.</p>
+    <button class="btn-primary" id="loadDayBtn">Load Day</button>
+  </div>
+
+  <div id="planLoadedState" style="display:none;">
+    <div class="plan-toolbar">
+      <button class="reset-link" id="resetDayBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Reset Day
+      </button>
+    </div>
+    <div class="tile-list" id="tileList"></div>
+  </div>
+</div>
+
+<div class="view" id="view-available">
+  <div class="seg-control" id="segControl">
+    <button class="seg-btn active" data-seg="added">Added <span class="count" id="countAdded"></span></button>
+    <button class="seg-btn" data-seg="available">Available <span class="count" id="countAvailable"></span></button>
+    <button class="seg-btn" data-seg="unavailable">Unavailable <span class="count" id="countUnavailable"></span></button>
+  </div>
+  <div id="catalogList"></div>
+</div>
+
+<div class="view" id="view-settings">
+  <div class="settings-section">
+    <h3>Activities</h3>
+    <div id="defList"></div>
+    <button class="add-def-btn" id="addDefBtn">+ New activity</button>
+  </div>
+  <div class="settings-section">
+    <h3>School Term Dates</h3>
+    <div id="termList"></div>
+    <button class="add-def-btn" id="addTermBtn">+ Add term</button>
+  </div>
+</div>
+
+<button class="fab" id="fabBtn" title="Add from catalog">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div class="tabbar">
+  <button class="tab-btn active" data-tab="plan">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="label">Plan</span>
+  </button>
+  <button class="tab-btn" data-tab="available">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="label">Available</span>
+  </button>
+  <button class="tab-btn" data-tab="settings">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="label">Settings</span>
+  </button>
+</div>
+
+<div class="sheet-backdrop" id="tileSheetBackdrop"></div>
+<div class="sheet" id="tileSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h2>Edit activity</h2>
+    <button class="icon-btn" id="closeTileSheet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">Name</label>
+      <input type="text" class="text-input" id="tileNameInput" maxlength="40">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Suggested time (optional)</label>
+      <input type="time" class="text-input mono" id="tileTimeInput">
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn-danger" id="removeTileBtn">Remove</button>
+    <button class="btn-primary" id="saveTileBtn">Save</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="defSheetBackdrop"></div>
+<div class="sheet" id="defSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h2 id="defSheetTitle">New activity</h2>
+    <button class="icon-btn" id="closeDefSheet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">Name</label>
+      <input type="text" class="text-input" id="defNameInput" placeholder="e.g. Bottle Feed" maxlength="40">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Icon</label>
+      <div class="icon-grid" id="iconGrid"></div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Category</label>
+      <div class="chip-row" id="categoryChips"></div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Suggested time (optional)</label>
+      <input type="time" class="text-input mono" id="defTimeInput">
+    </div>
+
+    <div class="field-group">
+      <div class="toggle-row">
+        <div>
+          <div class="lbl">Add automatically</div>
+          <div class="sub-lbl">Loads onto every day without asking</div>
+        </div>
+        <div class="switch" id="autoAddToggle"></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="toggle-row">
+        <div>
+          <div class="lbl">School term only</div>
+          <div class="sub-lbl">Only available during school term</div>
+        </div>
+        <div class="switch" id="termOnlyToggle"></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="toggle-row">
+        <div>
+          <div class="lbl">Booking required</div>
+          <div class="sub-lbl">Shows a reminder badge on the tile</div>
+        </div>
+        <div class="switch" id="bookingToggle"></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <div class="toggle-row">
+        <div>
+          <div class="lbl">Limit availability</div>
+          <div class="sub-lbl">Only show on certain days or hours</div>
+        </div>
+        <div class="switch" id="rulesToggle"></div>
+      </div>
+    </div>
+
+    <div id="rulesFields" style="display:none;">
+      <div class="field-group">
+        <label class="field-label">Days of week</label>
+        <div class="day-chip-row" id="dayChipRow"></div>
+      </div>
+      <div class="date-range-row">
+        <div class="field-group">
+          <label class="field-label">Open from (optional)</label>
+          <input type="time" class="text-input mono" id="defOpenTime">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Open until (optional)</label>
+          <input type="time" class="text-input mono" id="defCloseTime">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-footer" id="defSheetFooter">
+    <button class="btn-danger" id="deleteDefBtn" style="display:none;">Delete</button>
+    <button class="btn-primary" id="saveDefBtn">Save</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="confirmSheetBackdrop"></div>
+<div class="sheet" id="confirmSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h2>Reset this day?</h2>
+    <button class="icon-btn" id="closeConfirmSheet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="confirm-text">
+    Everything on this day's plan will be removed, including anything you added by hand. Automatic activities will be reloaded using your current settings.
+  </div>
+  <div class="sheet-footer">
+    <button class="btn-secondary" id="cancelResetBtn" style="flex:1; text-align:center;">Cancel</button>
+    <button class="btn-danger" id="confirmResetBtn">Reset Day</button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="termSheetBackdrop"></div>
+<div class="sheet" id="termSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h2 id="termSheetTitle">New term</h2>
+    <button class="icon-btn" id="closeTermSheet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">Label</label>
+      <input type="text" class="text-input" id="termLabelInput" placeholder="e.g. Term 1 2027" maxlength="40">
+    </div>
+    <div class="date-range-row">
+      <div class="field-group">
+        <label class="field-label">Start date</label>
+        <input type="date" class="text-input mono" id="termStartInput">
+      </div>
+      <div class="field-group">
+        <label class="field-label">End date</label>
+        <input type="date" class="text-input mono" id="termEndInput">
+      </div>
+    </div>
+  </div>
+  <div class="sheet-footer">
+    <button class="btn-danger" id="deleteTermBtn" style="display:none;">Delete</button>
+    <button class="btn-primary" id="saveTermBtn">Save</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  var CATEGORIES = [
+    { id: 'feed',    label: 'Feed',    color: '#C8956A', bg: '#F5E6D8' },
+    { id: 'sleep',   label: 'Sleep',   color: '#7E96A8', bg: '#E4ECF1' },
+    { id: 'outing',  label: 'Outing',  color: '#8FA876', bg: '#E8EFDF' },
+    { id: 'home',    label: 'Home',    color: '#C97E84', bg: '#F3E2E3' },
+    { id: 'other',   label: 'Other',   color: '#A89A8C', bg: '#ECE6DC' }
+  ];
+  var ICON_CHOICES = ['🍼','🥣','😴','📚','🚶','👶','🏡','👨‍👩‍👧','🎵','🛁','🧸','☀️','🚗','🩺','🎈','🌳','📦','✨','💤','🍎','🧴','🎨','📞','🛒','👋','❤️','📅','⭐'];
+  var DAY_LABELS = ['S','M','T','W','T','F','S'];
+  var STORAGE_DEFS = 'dayplan_definitions';
+  var STORAGE_PLANS = 'dayplan_daily';
+  var STORAGE_TERMS = 'dayplan_term_dates';
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  function catInfo(catId) {
+    for (var i = 0; i < CATEGORIES.length; i++) if (CATEGORIES[i].id === catId) return CATEGORIES[i];
+    return CATEGORIES[CATEGORIES.length - 1];
+  }
+
+  var state = {
+    definitions: [],
+    plans: {},
+    termDates: [],
+    currentDate: new Date(),
+    currentTab: 'plan',
+    currentSeg: 'added',
+    editingDefId: null,
+    editingTileId: null
+  };
+
+  function loadState() {
+    try {
+      var d = localStorage.getItem(STORAGE_DEFS);
+      state.definitions = d ? JSON.parse(d) : seedDefaultDefinitions();
+    } catch (e) { state.definitions = seedDefaultDefinitions(); }
+    try {
+      var p = localStorage.getItem(STORAGE_PLANS);
+      state.plans = p ? JSON.parse(p) : {};
+    } catch (e) { state.plans = {}; }
+    try {
+      var t = localStorage.getItem(STORAGE_TERMS);
+      state.termDates = t ? JSON.parse(t) : seedDefaultTermDates();
+    } catch (e) { state.termDates = seedDefaultTermDates(); }
+    if (!state.definitions.length) state.definitions = seedDefaultDefinitions();
+    saveDefs();
+    saveTermDates();
+  }
+
+  function seedDefaultTermDates() {
+    // NSW Eastern division, 2026, from education.nsw.gov.au
+    return [
+      { id: uid(), label: 'Term 1 2026', start: '2026-02-02', end: '2026-04-02' },
+      { id: uid(), label: 'Term 2 2026', start: '2026-04-22', end: '2026-07-03' },
+      { id: uid(), label: 'Term 3 2026', start: '2026-07-21', end: '2026-09-25' },
+      { id: uid(), label: 'Term 4 2026', start: '2026-10-13', end: '2026-12-17' }
+    ];
+  }
+
+  function seedDefaultDefinitions() {
+    return [
+      { id: uid(), name: 'Bottle Feed', icon: '🍼', category: 'feed', time: '07:00', autoAdd: true, bookingRequired: false, schoolTermOnly: false, rules: null },
+      { id: uid(), name: 'Solids Feed', icon: '🥣', category: 'feed', time: '08:30', autoAdd: true, bookingRequired: false, schoolTermOnly: false, rules: null },
+      { id: uid(), name: 'Nap', icon: '😴', category: 'sleep', time: '10:00', autoAdd: true, bookingRequired: false, schoolTermOnly: false, rules: null },
+      { id: uid(), name: 'Library Storytime', icon: '📚', category: 'outing', time: '10:00', autoAdd: false, bookingRequired: false, schoolTermOnly: true, rules: { days: [2,4], openTime: '09:30', closeTime: '12:00' } },
+      { id: uid(), name: 'Pram Walk', icon: '🚶', category: 'outing', time: null, autoAdd: false, bookingRequired: false, schoolTermOnly: false, rules: null },
+      { id: uid(), name: 'Visitors', icon: '👋', category: 'home', time: null, autoAdd: false, bookingRequired: false, schoolTermOnly: false, rules: null }
+    ];
+  }
+
+  function saveTermDates() { localStorage.setItem(STORAGE_TERMS, JSON.stringify(state.termDates)); }
+
+  function saveDefs() { localStorage.setItem(STORAGE_DEFS, JSON.stringify(state.definitions)); }
+  function savePlans() { localStorage.setItem(STORAGE_PLANS, JSON.stringify(state.plans)); }
+
+  function dateKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function todayKey() { return dateKey(new Date()); }
+
+  function getPlan(key) { return state.plans[key] || null; }
+  function ensurePlanObj(key) {
+    if (!state.plans[key]) state.plans[key] = { loaded: false, items: [] };
+    return state.plans[key];
+  }
+
+  function isAvailableOnDate(def, d) {
+    if (def.schoolTermOnly && !isInSchoolTerm(d)) {
+      return { available: false, reason: 'Not in school term' };
+    }
+    if (!def.rules) return { available: true };
+    var r = def.rules;
+    if (r.days && r.days.length) {
+      if (r.days.indexOf(d.getDay()) === -1) {
+        return { available: false, reason: 'Not on ' + dayName(d.getDay()) };
+      }
+    }
+    return { available: true };
+  }
+
+  function isInSchoolTerm(d) {
+    var key = dateKey(d);
+    for (var i = 0; i < state.termDates.length; i++) {
+      var t = state.termDates[i];
+      if (key >= t.start && key <= t.end) return true;
+    }
+    return false;
+  }
+
+  function dayName(idx) {
+    return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][idx];
+  }
+  function formatShortDate(d) {
+    return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  }
+
+  function formatDateLabel(d) {
+    var key = dateKey(d);
+    var today = todayKey();
+    var diffDays = Math.round((new Date(key) - new Date(today)) / 86400000);
+    var main = d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' });
+    var sub = '';
+    if (diffDays === 0) sub = 'Today';
+    else if (diffDays === 1) sub = 'Tomorrow';
+    else if (diffDays === -1) sub = 'Yesterday';
+    return { main: main, sub: sub };
+  }
+
+  function renderDateNav() {
+    var lbl = formatDateLabel(state.currentDate);
+    var html = lbl.main;
+    if (lbl.sub) html += '<span class="sub">' + lbl.sub + '</span>';
+    document.getElementById('dateLabel').innerHTML = html;
+  }
+
+  function renderPlanView() {
+    var key = dateKey(state.currentDate);
+    var plan = getPlan(key);
+    var emptyEl = document.getElementById('planEmptyState');
+    var loadedEl = document.getElementById('planLoadedState');
+
+    if (!plan || !plan.loaded) {
+      emptyEl.style.display = '';
+      loadedEl.style.display = 'none';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    loadedEl.style.display = '';
+
+    var list = document.getElementById('tileList');
+    list.innerHTML = '';
+
+    if (!plan.items.length) {
+      list.innerHTML = '<div class="empty-section">No activities yet — tap + to add one from your catalog.</div>';
+      return;
+    }
+
+    plan.items.forEach(function(item, idx) {
+      var cat = catInfo(item.category);
+      var tile = document.createElement('div');
+      tile.className = 'tile' + (item.done ? ' done' : '');
+      tile.style.setProperty('--cat-color', cat.color);
+      tile.style.setProperty('--cat-bg', cat.bg);
+
+      var checkBtn = document.createElement('button');
+      checkBtn.className = 'tile-check';
+      checkBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      checkBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      checkBtn.addEventListener('click', function() {
+        item.done = !item.done;
+        savePlans();
+        renderPlanView();
+      });
+
+      var iconEl = document.createElement('div');
+      iconEl.className = 'tile-icon';
+      iconEl.textContent = item.icon;
+
+      var mid = document.createElement('div');
+      mid.className = 'tile-mid';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'tile-name';
+      nameEl.textContent = item.name;
+      var metaEl = document.createElement('div');
+      metaEl.className = 'tile-meta';
+      var timeEl = document.createElement('span');
+      timeEl.className = 'tile-time' + (item.time ? '' : ' none');
+      timeEl.textContent = item.time ? formatTime(item.time) : 'No set time';
+      metaEl.appendChild(timeEl);
+      var dot = document.createElement('span');
+      dot.style.color = 'var(--ink-soft)';
+      dot.style.fontSize = '10px';
+      dot.textContent = '\u2022';
+      metaEl.appendChild(dot);
+      var catEl = document.createElement('span');
+      catEl.className = 'tile-cat-label';
+      catEl.textContent = cat.label;
+      metaEl.appendChild(catEl);
+      mid.appendChild(nameEl);
+      mid.appendChild(metaEl);
+
+      if (item.openTime || item.closeTime) {
+        var hoursEl = document.createElement('div');
+        hoursEl.className = 'tile-cat-label';
+        hoursEl.style.marginTop = '2px';
+        hoursEl.textContent = 'Open ' + formatOpenHours(item.openTime, item.closeTime);
+        mid.appendChild(hoursEl);
+      }
+
+      var badges = buildBadgeRow(item.schoolTermOnly, item.bookingRequired);
+      if (badges) mid.appendChild(badges);
+
+      var editBtn = document.createElement('button');
+      editBtn.className = 'tile-edit-btn';
+      editBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+      editBtn.addEventListener('pointerdown', function(e) { e.stopPropagation(); });
+      editBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openTileSheet(item.id);
+      });
+
+      tile.dataset.itemId = item.id;
+      tile.appendChild(checkBtn);
+      tile.appendChild(iconEl);
+      tile.appendChild(mid);
+      tile.appendChild(editBtn);
+      list.appendChild(tile);
+
+      attachTileHoldDrag(tile, item.id, plan);
+    });
+  }
+
+  function formatTime(t) {
+    var parts = t.split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parts[1];
+    var suffix = h >= 12 ? 'pm' : 'am';
+    var h12 = h % 12;
+    if (h12 === 0) h12 = 12;
+    return h12 + ':' + m + suffix;
+  }
+
+  // ============ HOLD-TO-DRAG ============
+  var HOLD_MS = 400;
+  var activeDrag = null;
+
+  function attachTileHoldDrag(tileEl, itemId, plan) {
+    var gs = null;
+
+    tileEl.addEventListener('pointerdown', function(e) {
+      if (e.target.closest('.tile-check') || e.target.closest('.tile-edit-btn')) return;
+      e.preventDefault();
+      gs = {
+        pointerId: e.pointerId,
+        startX: e.clientX, startY: e.clientY,
+        currentX: e.clientX, currentY: e.clientY,
+        active: true, dragging: false, moved: false
+      };
+      tileEl.classList.add('holding');
+      gs.timer = setTimeout(function() {
+        if (!gs || !gs.active) return;
+        gs.dragging = true;
+        tileEl.classList.remove('holding');
+        tileEl.style.touchAction = 'none';
+        try { navigator.vibrate(30); } catch(err) {}
+        // Capture AFTER drag confirmed — finger is still down
+        try { tileEl.setPointerCapture(gs.pointerId); } catch(err) {}
+        beginTileDrag(gs.currentX, gs.currentY, tileEl, itemId, plan);
+      }, HOLD_MS);
+    });
+
+    tileEl.addEventListener('pointermove', function(e) {
+      if (!gs || !gs.active) return;
+      gs.currentX = e.clientX;
+      gs.currentY = e.clientY;
+      if (gs.dragging) {
+        onTileDragMove(e);
+      }
+      // Do NOT cancel on movement — let the browser handle scroll naturally
+      // until drag mode activates
+    });
+
+    tileEl.addEventListener('pointerup', function(e) {
+      if (!gs) return;
+      clearTimeout(gs.timer);
+      tileEl.classList.remove('holding');
+      tileEl.style.touchAction = '';
+      if (gs.dragging) onTileDrop(plan);
+      gs = null;
+    });
+
+    tileEl.addEventListener('pointercancel', function(e) {
+      if (!gs) return;
+      clearTimeout(gs.timer);
+      tileEl.classList.remove('holding');
+      tileEl.style.touchAction = '';
+      if (gs.dragging && activeDrag) {
+        activeDrag.ghost.remove();
+        document.querySelectorAll('.drop-line').forEach(function(l) { l.remove(); });
+        tileEl.style.opacity = '';
+        activeDrag = null;
+      }
+      gs = null;
+    });
+  }
+
+  function beginTileDrag(clientX, clientY, tileEl, itemId, plan) {
+    var list = document.getElementById('tileList');
+    var rect = tileEl.getBoundingClientRect();
+
+    var ghost = tileEl.cloneNode(true);
+    ghost.style.cssText = [
+      'position:fixed', 'z-index:100', 'pointer-events:none', 'opacity:0.93',
+      'box-shadow:0 10px 28px rgba(46,42,36,0.22)', 'border-radius:16px', 'overflow:hidden',
+      'width:' + rect.width + 'px',
+      'left:' + rect.left + 'px',
+      'top:' + rect.top + 'px'
+    ].join(';');
+    ghost.style.setProperty('--cat-color', tileEl.style.getPropertyValue('--cat-color'));
+    ghost.style.setProperty('--cat-bg', tileEl.style.getPropertyValue('--cat-bg'));
+    document.body.appendChild(ghost);
+
+    tileEl.style.opacity = '0.3';
+
+    activeDrag = {
+      itemId: itemId, plan: plan,
+      sourceTile: tileEl, ghost: ghost, list: list,
+      offsetY: clientY - rect.top,
+      dropIndex: null
+    };
+  }
+
+  function onTileDragMove(e) {
+    if (!activeDrag) return;
+    activeDrag.ghost.style.top = (e.clientY - activeDrag.offsetY) + 'px';
+
+    var centerY = e.clientY - activeDrag.offsetY + activeDrag.ghost.offsetHeight / 2;
+    var tiles = Array.prototype.slice.call(activeDrag.list.querySelectorAll('.tile'));
+    activeDrag.list.querySelectorAll('.drop-line').forEach(function(l) { l.remove(); });
+
+    var insertBefore = null;
+    for (var i = 0; i < tiles.length; i++) {
+      var r = tiles[i].getBoundingClientRect();
+      if (centerY < r.top + r.height / 2) { insertBefore = i; break; }
+    }
+    activeDrag.dropIndex = insertBefore;
+
+    var line = document.createElement('div');
+    line.className = 'drop-line';
+    if (insertBefore === null) activeDrag.list.appendChild(line);
+    else activeDrag.list.insertBefore(line, tiles[insertBefore]);
+  }
+
+  function onTileDrop(plan) {
+    if (!activeDrag) return;
+    activeDrag.ghost.remove();
+    activeDrag.list.querySelectorAll('.drop-line').forEach(function(l) { l.remove(); });
+    activeDrag.sourceTile.style.opacity = '';
+
+    var items = plan.items;
+    var fromIdx = items.findIndex(function(i) { return i.id === activeDrag.itemId; });
+    var toIdx = activeDrag.dropIndex;
+    if (fromIdx !== -1 && toIdx !== null && fromIdx !== toIdx && fromIdx + 1 !== toIdx) {
+      var moved = items.splice(fromIdx, 1)[0];
+      items.splice(toIdx > fromIdx ? toIdx - 1 : toIdx, 0, moved);
+    }
+
+    activeDrag = null;
+    savePlans();
+    renderPlanView();
+  }
+
+  function formatOpenHours(openTime, closeTime) {
+    if (openTime && closeTime) return formatTime(openTime) + '\u2013' + formatTime(closeTime);
+    if (openTime) return 'from ' + formatTime(openTime);
+    if (closeTime) return 'until ' + formatTime(closeTime);
+    return '';
+  }
+
+  function buildBadgeRow(schoolTermOnly, bookingRequired) {
+    if (!schoolTermOnly && !bookingRequired) return null;
+    var row = document.createElement('div');
+    row.className = 'badge-row';
+    if (schoolTermOnly) {
+      var termBadge = document.createElement('span');
+      termBadge.className = 'badge term';
+      termBadge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Term only';
+      row.appendChild(termBadge);
+    }
+    if (bookingRequired) {
+      var bookBadge = document.createElement('span');
+      bookBadge.className = 'badge booking';
+      bookBadge.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Booking req.';
+      row.appendChild(bookBadge);
+    }
+    return row;
+  }
+
+  function buildAutoItems(d) {
+    var items = [];
+    state.definitions.forEach(function(def) {
+      if (!def.autoAdd) return;
+      var avail = isAvailableOnDate(def, d);
+      if (!avail.available) return;
+      items.push({
+        id: uid(),
+        definitionId: def.id,
+        name: def.name,
+        icon: def.icon,
+        category: def.category,
+        time: def.time || null,
+        done: false,
+        bookingRequired: !!def.bookingRequired,
+        schoolTermOnly: !!def.schoolTermOnly,
+        openTime: def.rules ? def.rules.openTime || null : null,
+        closeTime: def.rules ? def.rules.closeTime || null : null
+      });
+    });
+    items.sort(function(a, b) {
+      if (a.time && b.time) return a.time < b.time ? -1 : 1;
+      if (a.time) return -1;
+      if (b.time) return 1;
+      return 0;
+    });
+    return items;
+  }
+
+  function loadDay() {
+    var key = dateKey(state.currentDate);
+    var plan = ensurePlanObj(key);
+    plan.loaded = true;
+    plan.items = buildAutoItems(state.currentDate);
+    savePlans();
+    renderPlanView();
+    renderAvailableView();
+  }
+
+  function resetDay() {
+    var key = dateKey(state.currentDate);
+    var plan = ensurePlanObj(key);
+    plan.items = buildAutoItems(state.currentDate);
+    savePlans();
+    renderPlanView();
+    renderAvailableView();
+    closeSheet('confirmSheet');
+  }
+
+  function renderAvailableView() {
+    var key = dateKey(state.currentDate);
+    var plan = getPlan(key);
+    var addedIds = plan && plan.loaded ? plan.items.map(function(i) { return i.definitionId; }).filter(Boolean) : [];
+
+    var added = [], available = [], unavailable = [];
+    state.definitions.forEach(function(def) {
+      var avail = isAvailableOnDate(def, state.currentDate);
+      var isAdded = addedIds.indexOf(def.id) !== -1;
+      if (isAdded) {
+        added.push(def);
+      } else if (avail.available) {
+        available.push(def);
+      } else {
+        var copy = {};
+        for (var k in def) copy[k] = def[k];
+        copy._reason = avail.reason;
+        unavailable.push(copy);
+      }
+    });
+
+    document.getElementById('countAdded').textContent = added.length;
+    document.getElementById('countAvailable').textContent = available.length;
+    document.getElementById('countUnavailable').textContent = unavailable.length;
+
+    var listEl = document.getElementById('catalogList');
+    listEl.innerHTML = '';
+
+    var planLoaded = plan && plan.loaded;
+
+    function renderRow(def, mode) {
+      var cat = catInfo(def.category);
+      var row = document.createElement('div');
+      row.className = 'cat-tile' + (mode === 'unavailable' ? ' unavailable' : '');
+
+      var iconEl = document.createElement('div');
+      iconEl.className = 'tile-icon';
+      iconEl.style.background = cat.bg;
+      iconEl.textContent = def.icon;
+
+      var mid = document.createElement('div');
+      mid.className = 'tile-mid';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'tile-name';
+      nameEl.textContent = def.name;
+      mid.appendChild(nameEl);
+
+      var metaEl = document.createElement('div');
+      metaEl.className = 'tile-meta';
+      var timeEl = document.createElement('span');
+      timeEl.className = 'tile-time' + (def.time ? '' : ' none');
+      timeEl.style.color = cat.color;
+      timeEl.textContent = def.time ? formatTime(def.time) : 'No set time';
+      metaEl.appendChild(timeEl);
+      mid.appendChild(metaEl);
+
+      var openT = def.rules ? def.rules.openTime : null;
+      var closeT = def.rules ? def.rules.closeTime : null;
+      if (openT || closeT) {
+        var hoursEl = document.createElement('div');
+        hoursEl.className = 'tile-cat-label';
+        hoursEl.style.marginTop = '2px';
+        hoursEl.textContent = 'Open ' + formatOpenHours(openT, closeT);
+        mid.appendChild(hoursEl);
+      }
+
+      var badges = buildBadgeRow(def.schoolTermOnly, def.bookingRequired);
+      if (badges) mid.appendChild(badges);
+
+      if (mode === 'unavailable' && def._reason) {
+        var reasonEl = document.createElement('div');
+        reasonEl.className = 'reason';
+        reasonEl.textContent = def._reason;
+        mid.appendChild(reasonEl);
+      }
+
+      var actionBtn = document.createElement('button');
+      actionBtn.className = 'action-btn ' + (mode === 'added' ? 'remove' : 'add');
+      if (mode === 'unavailable') {
+        actionBtn.disabled = true;
+        actionBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      } else if (mode === 'added') {
+        actionBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        actionBtn.title = 'Remove from today';
+        actionBtn.addEventListener('click', function() {
+          removeDefFromPlan(def.id);
+        });
+      } else {
+        actionBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        actionBtn.title = 'Add to today';
+        if (!planLoaded) {
+          actionBtn.disabled = true;
+          actionBtn.title = 'Load the day first';
+        } else {
+          actionBtn.addEventListener('click', function() {
+            addDefToPlan(def.id);
+          });
+        }
+      }
+
+      row.appendChild(iconEl);
+      row.appendChild(mid);
+      row.appendChild(actionBtn);
+      listEl.appendChild(row);
+    }
+
+    var activeList, mode, emptyMsg;
+    if (state.currentSeg === 'added') { activeList = added; mode = 'added'; emptyMsg = 'Nothing added to this day yet.'; }
+    else if (state.currentSeg === 'available') { activeList = available; mode = 'available'; emptyMsg = 'Everything available is already added.'; }
+    else { activeList = unavailable; mode = 'unavailable'; emptyMsg = 'Nothing is unavailable today.'; }
+
+    if (!activeList.length) {
+      listEl.innerHTML = '<div class="empty-section">' + emptyMsg + '</div>';
+      return;
+    }
+    activeList.forEach(function(def) { renderRow(def, mode); });
+  }
+
+  function addDefToPlan(defId) {
+    var key = dateKey(state.currentDate);
+    var plan = ensurePlanObj(key);
+    if (!plan.loaded) return;
+    var def = state.definitions.find(function(d) { return d.id === defId; });
+    if (!def) return;
+    var newItem = {
+      id: uid(),
+      definitionId: def.id,
+      name: def.name,
+      icon: def.icon,
+      category: def.category,
+      time: def.time || null,
+      done: false,
+      bookingRequired: !!def.bookingRequired,
+      schoolTermOnly: !!def.schoolTermOnly,
+      openTime: def.rules ? def.rules.openTime || null : null,
+      closeTime: def.rules ? def.rules.closeTime || null : null
+    };
+
+    // Slot by suggested time: insert before the first item whose time is later
+    var insertIdx = plan.items.length; // default: append
+    if (newItem.time) {
+      for (var i = 0; i < plan.items.length; i++) {
+        var t = plan.items[i].time;
+        if (t && t > newItem.time) { insertIdx = i; break; }
+      }
+    }
+    plan.items.splice(insertIdx, 0, newItem);
+
+    savePlans();
+    renderAvailableView();
+    renderPlanView();
+  }
+
+  function removeDefFromPlan(defId) {
+    var key = dateKey(state.currentDate);
+    var plan = getPlan(key);
+    if (!plan) return;
+    plan.items = plan.items.filter(function(i) { return i.definitionId !== defId; });
+    savePlans();
+    renderAvailableView();
+    renderPlanView();
+  }
+
+  function openTileSheet(itemId) {
+    state.editingTileId = itemId;
+    var key = dateKey(state.currentDate);
+    var plan = getPlan(key);
+    var item = plan.items.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    document.getElementById('tileNameInput').value = item.name;
+    document.getElementById('tileTimeInput').value = item.time || '';
+    openSheet('tileSheet');
+  }
+
+  function saveTileEdit() {
+    var key = dateKey(state.currentDate);
+    var plan = getPlan(key);
+    var item = plan.items.find(function(i) { return i.id === state.editingTileId; });
+    if (!item) return;
+    var name = document.getElementById('tileNameInput').value.trim();
+    if (name) item.name = name;
+    var t = document.getElementById('tileTimeInput').value;
+    item.time = t || null;
+    savePlans();
+    closeSheet('tileSheet');
+    renderPlanView();
+  }
+
+  function removeTile() {
+    var key = dateKey(state.currentDate);
+    var plan = getPlan(key);
+    plan.items = plan.items.filter(function(i) { return i.id !== state.editingTileId; });
+    savePlans();
+    closeSheet('tileSheet');
+    renderPlanView();
+    renderAvailableView();
+  }
+
+  function renderSettingsView() {
+    var listEl = document.getElementById('defList');
+    listEl.innerHTML = '';
+    if (!state.definitions.length) {
+      listEl.innerHTML = '<div class="empty-section">No activities defined yet.</div>';
+    } else {
+    state.definitions.forEach(function(def, idx) {
+      var cat = catInfo(def.category);
+      var row = document.createElement('div');
+      row.className = 'def-row';
+
+      var iconEl = document.createElement('div');
+      iconEl.className = 'tile-icon';
+      iconEl.style.background = cat.bg;
+      iconEl.textContent = def.icon;
+
+      var mid = document.createElement('div');
+      mid.className = 'def-row-mid';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'def-row-name';
+      nameEl.textContent = def.name;
+      var metaParts = [cat.label];
+      if (def.time) metaParts.push(formatTime(def.time));
+      if (def.autoAdd) metaParts.push('Auto-added');
+      if (def.rules && def.rules.days && def.rules.days.length) metaParts.push('Limited days');
+      if (def.schoolTermOnly) metaParts.push('Term only');
+      if (def.bookingRequired) metaParts.push('Booking req.');
+      var metaEl = document.createElement('div');
+      metaEl.className = 'def-row-meta';
+      metaEl.textContent = metaParts.join(' \u00b7 ');
+      mid.appendChild(nameEl);
+      mid.appendChild(metaEl);
+
+      var actions = document.createElement('div');
+      actions.className = 'tile-actions';
+      var upBtn = document.createElement('button');
+      upBtn.className = 'tile-arrow';
+      upBtn.disabled = idx === 0;
+      upBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
+      upBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (idx > 0) {
+          var tmp = state.definitions[idx-1];
+          state.definitions[idx-1] = state.definitions[idx];
+          state.definitions[idx] = tmp;
+          saveDefs();
+          renderSettingsView();
+        }
+      });
+      var downBtn = document.createElement('button');
+      downBtn.className = 'tile-arrow';
+      downBtn.disabled = idx === state.definitions.length - 1;
+      downBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+      downBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (idx < state.definitions.length - 1) {
+          var tmp = state.definitions[idx+1];
+          state.definitions[idx+1] = state.definitions[idx];
+          state.definitions[idx] = tmp;
+          saveDefs();
+          renderSettingsView();
+        }
+      });
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
+
+      var chevron = document.createElement('div');
+      chevron.className = 'def-row-chevron';
+      chevron.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
+      row.appendChild(iconEl);
+      row.appendChild(mid);
+      row.appendChild(actions);
+      row.appendChild(chevron);
+      row.addEventListener('click', function() { openDefSheet(def.id); });
+      listEl.appendChild(row);
+    });
+    }
+    renderTermList();
+  }
+
+  function renderTermList() {
+    var listEl = document.getElementById('termList');
+    listEl.innerHTML = '';
+    if (!state.termDates.length) {
+      listEl.innerHTML = '<div class="empty-section">No term dates added yet.</div>';
+      return;
+    }
+    var sorted = state.termDates.slice().sort(function(a, b) { return a.start < b.start ? -1 : 1; });
+    sorted.forEach(function(term) {
+      var row = document.createElement('div');
+      row.className = 'def-row';
+
+      var iconEl = document.createElement('div');
+      iconEl.className = 'tile-icon';
+      iconEl.style.background = '#E8EFDF';
+      iconEl.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5E7548" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+
+      var mid = document.createElement('div');
+      mid.className = 'def-row-mid';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'def-row-name';
+      nameEl.textContent = term.label;
+      var metaEl = document.createElement('div');
+      metaEl.className = 'def-row-meta';
+      metaEl.textContent = formatShortDate(new Date(term.start + 'T00:00:00')) + ' \u2013 ' + formatShortDate(new Date(term.end + 'T00:00:00'));
+      mid.appendChild(nameEl);
+      mid.appendChild(metaEl);
+
+      var chevron = document.createElement('div');
+      chevron.className = 'def-row-chevron';
+      chevron.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
+      row.appendChild(iconEl);
+      row.appendChild(mid);
+      row.appendChild(chevron);
+      row.addEventListener('click', function() { openTermSheet(term.id); });
+      listEl.appendChild(row);
+    });
+  }
+
+  var defSheetSelectedIcon = '\ud83c\udf7c';
+  var defSheetSelectedCat = 'feed';
+  var defSheetSelectedDays = [];
+
+  function buildIconGrid() {
+    var grid = document.getElementById('iconGrid');
+    grid.innerHTML = '';
+    ICON_CHOICES.forEach(function(ic) {
+      var btn = document.createElement('button');
+      btn.className = 'icon-choice' + (ic === defSheetSelectedIcon ? ' selected' : '');
+      btn.textContent = ic;
+      btn.addEventListener('click', function() {
+        defSheetSelectedIcon = ic;
+        buildIconGrid();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  function buildCategoryChips() {
+    var row = document.getElementById('categoryChips');
+    row.innerHTML = '';
+    CATEGORIES.forEach(function(cat) {
+      var chip = document.createElement('button');
+      chip.className = 'chip' + (cat.id === defSheetSelectedCat ? ' selected' : '');
+      chip.textContent = cat.label;
+      chip.style.setProperty('--chip-color', cat.color);
+      chip.style.setProperty('--chip-bg', cat.bg);
+      chip.addEventListener('click', function() {
+        defSheetSelectedCat = cat.id;
+        buildCategoryChips();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  function buildDayChips() {
+    var row = document.getElementById('dayChipRow');
+    row.innerHTML = '';
+    DAY_LABELS.forEach(function(lbl, idx) {
+      var chip = document.createElement('button');
+      chip.className = 'day-chip' + (defSheetSelectedDays.indexOf(idx) !== -1 ? ' selected' : '');
+      chip.textContent = lbl;
+      chip.addEventListener('click', function() {
+        var pos = defSheetSelectedDays.indexOf(idx);
+        if (pos === -1) defSheetSelectedDays.push(idx);
+        else defSheetSelectedDays.splice(pos, 1);
+        buildDayChips();
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  function openDefSheet(defId) {
+    state.editingDefId = defId || null;
+    var def = defId ? state.definitions.find(function(d) { return d.id === defId; }) : null;
+
+    document.getElementById('defSheetTitle').textContent = def ? 'Edit activity' : 'New activity';
+    document.getElementById('defNameInput').value = def ? def.name : '';
+    document.getElementById('defTimeInput').value = def && def.time ? def.time : '';
+    defSheetSelectedIcon = def ? def.icon : ICON_CHOICES[0];
+    defSheetSelectedCat = def ? def.category : 'feed';
+    defSheetSelectedDays = def && def.rules && def.rules.days ? def.rules.days.slice() : [];
+
+    var autoOn = !!(def && def.autoAdd);
+    setToggle('autoAddToggle', autoOn);
+
+    var termOn = !!(def && def.schoolTermOnly);
+    setToggle('termOnlyToggle', termOn);
+
+    var bookingOn = !!(def && def.bookingRequired);
+    setToggle('bookingToggle', bookingOn);
+
+    var rulesOn = !!(def && def.rules);
+    setToggle('rulesToggle', rulesOn);
+    document.getElementById('rulesFields').style.display = rulesOn ? '' : 'none';
+    document.getElementById('defOpenTime').value = def && def.rules && def.rules.openTime ? def.rules.openTime : '';
+    document.getElementById('defCloseTime').value = def && def.rules && def.rules.closeTime ? def.rules.closeTime : '';
+
+    document.getElementById('deleteDefBtn').style.display = def ? '' : 'none';
+
+    buildIconGrid();
+    buildCategoryChips();
+    buildDayChips();
+
+    openSheet('defSheet');
+  }
+
+  function setToggle(id, on) {
+    var el = document.getElementById(id);
+    el.classList.toggle('on', on);
+    el.dataset.on = on ? '1' : '0';
+  }
+  function toggleIsOn(id) { return document.getElementById(id).dataset.on === '1'; }
+
+  function saveDefEdit() {
+    var name = document.getElementById('defNameInput').value.trim();
+    if (!name) {
+      document.getElementById('defNameInput').focus();
+      return;
+    }
+    var time = document.getElementById('defTimeInput').value || null;
+    var autoAdd = toggleIsOn('autoAddToggle');
+    var schoolTermOnly = toggleIsOn('termOnlyToggle');
+    var bookingRequired = toggleIsOn('bookingToggle');
+    var rulesOn = toggleIsOn('rulesToggle');
+    var rules = null;
+    if (rulesOn) {
+      var ot = document.getElementById('defOpenTime').value || null;
+      var ct = document.getElementById('defCloseTime').value || null;
+      rules = {
+        days: defSheetSelectedDays.slice(),
+        openTime: ot,
+        closeTime: ct
+      };
+    }
+
+    if (state.editingDefId) {
+      var def = state.definitions.find(function(d) { return d.id === state.editingDefId; });
+      def.name = name;
+      def.icon = defSheetSelectedIcon;
+      def.category = defSheetSelectedCat;
+      def.time = time;
+      def.autoAdd = autoAdd;
+      def.schoolTermOnly = schoolTermOnly;
+      def.bookingRequired = bookingRequired;
+      def.rules = rules;
+    } else {
+      state.definitions.push({
+        id: uid(),
+        name: name,
+        icon: defSheetSelectedIcon,
+        category: defSheetSelectedCat,
+        time: time,
+        autoAdd: autoAdd,
+        schoolTermOnly: schoolTermOnly,
+        bookingRequired: bookingRequired,
+        rules: rules
+      });
+    }
+    saveDefs();
+    closeSheet('defSheet');
+    renderSettingsView();
+    renderAvailableView();
+  }
+
+  function deleteDef() {
+    state.definitions = state.definitions.filter(function(d) { return d.id !== state.editingDefId; });
+    saveDefs();
+    closeSheet('defSheet');
+    renderSettingsView();
+    renderAvailableView();
+  }
+
+  var editingTermId = null;
+
+  function openTermSheet(termId) {
+    editingTermId = termId || null;
+    var term = termId ? state.termDates.find(function(t) { return t.id === termId; }) : null;
+    document.getElementById('termSheetTitle').textContent = term ? 'Edit term' : 'New term';
+    document.getElementById('termLabelInput').value = term ? term.label : '';
+    document.getElementById('termStartInput').value = term ? term.start : '';
+    document.getElementById('termEndInput').value = term ? term.end : '';
+    document.getElementById('deleteTermBtn').style.display = term ? '' : 'none';
+    openSheet('termSheet');
+  }
+
+  function saveTermEdit() {
+    var label = document.getElementById('termLabelInput').value.trim();
+    var start = document.getElementById('termStartInput').value;
+    var end = document.getElementById('termEndInput').value;
+    if (!label || !start || !end) {
+      if (!label) document.getElementById('termLabelInput').focus();
+      else if (!start) document.getElementById('termStartInput').focus();
+      else document.getElementById('termEndInput').focus();
+      return;
+    }
+    if (editingTermId) {
+      var term = state.termDates.find(function(t) { return t.id === editingTermId; });
+      term.label = label;
+      term.start = start;
+      term.end = end;
+    } else {
+      state.termDates.push({ id: uid(), label: label, start: start, end: end });
+    }
+    saveTermDates();
+    closeSheet('termSheet');
+    renderTermList();
+    renderAvailableView();
+  }
+
+  function deleteTermDate() {
+    state.termDates = state.termDates.filter(function(t) { return t.id !== editingTermId; });
+    saveTermDates();
+    closeSheet('termSheet');
+    renderTermList();
+    renderAvailableView();
+  }
+
+  function openSheet(id) {
+    document.getElementById(id).classList.add('open');
+    document.getElementById(id + 'Backdrop').classList.add('open');
+  }
+  function closeSheet(id) {
+    document.getElementById(id).classList.remove('open');
+    document.getElementById(id + 'Backdrop').classList.remove('open');
+  }
+
+  function switchTab(tab) {
+    state.currentTab = tab;
+    document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+    document.getElementById('view-' + tab).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+
+    var titles = { plan: "Today's Plan", available: 'Available Activities', settings: 'Settings' };
+    var d = state.currentDate;
+    var key = dateKey(d);
+    var isToday = key === todayKey();
+    if (tab === 'plan') {
+      document.getElementById('pageTitle').textContent = isToday ? "Today's Plan" : 'Day Plan';
+    } else {
+      document.getElementById('pageTitle').textContent = titles[tab];
+    }
+
+    document.getElementById('dateNav').style.display = (tab === 'settings') ? 'none' : '';
+    document.getElementById('fabBtn').style.display = (tab === 'plan') ? '' : 'none';
+    document.getElementById('headerActionBtn').style.display = (tab === 'settings') ? '' : 'none';
+
+    if (tab === 'plan') renderPlanView();
+    if (tab === 'available') renderAvailableView();
+    if (tab === 'settings') renderSettingsView();
+  }
+
+  function shiftDate(deltaDays) {
+    var d = new Date(state.currentDate);
+    d.setDate(d.getDate() + deltaDays);
+    state.currentDate = d;
+    renderDateNav();
+    switchTab(state.currentTab);
+  }
+
+  function init() {
+    loadState();
+    renderDateNav();
+    renderPlanView();
+
+    document.getElementById('prevDayBtn').addEventListener('click', function() { shiftDate(-1); });
+    document.getElementById('nextDayBtn').addEventListener('click', function() { shiftDate(1); });
+
+    document.getElementById('loadDayBtn').addEventListener('click', loadDay);
+    document.getElementById('resetDayBtn').addEventListener('click', function() { openSheet('confirmSheet'); });
+    document.getElementById('cancelResetBtn').addEventListener('click', function() { closeSheet('confirmSheet'); });
+    document.getElementById('confirmResetBtn').addEventListener('click', resetDay);
+    document.getElementById('closeConfirmSheet').addEventListener('click', function() { closeSheet('confirmSheet'); });
+    document.getElementById('confirmSheetBackdrop').addEventListener('click', function() { closeSheet('confirmSheet'); });
+
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { switchTab(btn.dataset.tab); });
+    });
+
+    document.getElementById('fabBtn').addEventListener('click', function() {
+      switchTab('available');
+    });
+
+    document.getElementById('headerActionBtn').addEventListener('click', function() {
+      if (state.currentTab === 'settings') openDefSheet(null);
+    });
+    document.getElementById('addDefBtn').addEventListener('click', function() { openDefSheet(null); });
+
+    document.getElementById('addTermBtn').addEventListener('click', function() { openTermSheet(null); });
+    document.getElementById('closeTermSheet').addEventListener('click', function() { closeSheet('termSheet'); });
+    document.getElementById('termSheetBackdrop').addEventListener('click', function() { closeSheet('termSheet'); });
+    document.getElementById('saveTermBtn').addEventListener('click', saveTermEdit);
+    document.getElementById('deleteTermBtn').addEventListener('click', deleteTermDate);
+
+    document.querySelectorAll('.seg-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        state.currentSeg = btn.dataset.seg;
+        document.querySelectorAll('.seg-btn').forEach(function(b) { b.classList.toggle('active', b === btn); });
+        renderAvailableView();
+      });
+    });
+
+    document.getElementById('closeTileSheet').addEventListener('click', function() { closeSheet('tileSheet'); });
+    document.getElementById('tileSheetBackdrop').addEventListener('click', function() { closeSheet('tileSheet'); });
+    document.getElementById('saveTileBtn').addEventListener('click', saveTileEdit);
+    document.getElementById('removeTileBtn').addEventListener('click', removeTile);
+
+    document.getElementById('closeDefSheet').addEventListener('click', function() { closeSheet('defSheet'); });
+    document.getElementById('defSheetBackdrop').addEventListener('click', function() { closeSheet('defSheet'); });
+    document.getElementById('saveDefBtn').addEventListener('click', saveDefEdit);
+    document.getElementById('deleteDefBtn').addEventListener('click', deleteDef);
+
+    document.getElementById('autoAddToggle').addEventListener('click', function() {
+      setToggle('autoAddToggle', !toggleIsOn('autoAddToggle'));
+    });
+    document.getElementById('termOnlyToggle').addEventListener('click', function() {
+      setToggle('termOnlyToggle', !toggleIsOn('termOnlyToggle'));
+    });
+    document.getElementById('bookingToggle').addEventListener('click', function() {
+      setToggle('bookingToggle', !toggleIsOn('bookingToggle'));
+    });
+    document.getElementById('rulesToggle').addEventListener('click', function() {
+      var newState = !toggleIsOn('rulesToggle');
+      setToggle('rulesToggle', newState);
+      document.getElementById('rulesFields').style.display = newState ? '' : 'none';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
